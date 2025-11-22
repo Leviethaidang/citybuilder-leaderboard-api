@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Home</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      body{
+        margin:0;
+        font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+        background:#0b1f3a;
+        color:#eaf2ff;
+      }
+      .home-wrap{
+        max-width:780px;
+        margin:20px auto;
+        padding:0 10px 40px;
+      }
+    </style>
+</head>
+<body>
+    <!-- Load header-->
+    <div id="site-header"></div>
+
+    <div class="home-wrap">
+      Đây là trang Home
+      <!-- sẽ build UI sau-->
+    </div>
+
+
+
+
+    
+    <!--script load header.html -->
+    <script>
+      (async function(){
+        try{
+          const res = await fetch("/header.html");
+          const html = await res.text();
+          document.getElementById("site-header").innerHTML = html;
+        }catch(e){
+          console.error("Không load được header:", e);
+        }
+      })();
+    </script>
+</body>
+</html>

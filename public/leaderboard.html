@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>City Builder Leaderboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <style>
+    :root{
+      /* Palette giấy vàng + đỏ nâu */
+      --card: rgba(120, 35, 20, 0.65);
+      --text-main: #4d1d0e;
+      --text-light: #fff3d6;
+      --text-muted: #f7e4b8;
+      --pill: rgba(255, 240, 200, 0.45);
+      --top1:#ffcc33;
+      --top2:#ff9933;
+      --top3:#cc7a29;
+    }
+
+    *{
+      box-sizing:border-box;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    }
+
+    html, body{
+    height:100%;
+    }   
+
+    body{
+      margin:0;
+      overflow:hidden;  
+      /* nền poster xô viết */
+      background:url("/img/LeaderboardBG.png") center/cover no-repeat fixed;
+      color:var(--text-light);
+    }
+
+    /* --------- layout 3 cột --------- */
+    main.page{
+      max-width:1200px;
+      margin:40px auto 60px;
+      padding:0 16px;
+    }
+
+    .layout-grid{
+      display:grid;
+      grid-template-columns: 0.9fr 1.3fr 0.8fr;  /* tỷ lệ 3 cột*/
+      gap:24px;
+      align-items:flex-start;
+    }
+    /* --------- cột giữa: leaderboard --------- */
+      .wrap{
+      grid-column:2;
+      width:100%;
+      max-width:900px;
+      margin:0 auto;
+      padding:0 0 40px;
+      display:flex;
+      flex-direction:column;
+      max-height:calc(100vh - 160px);
+    }
+    h1{
+      margin:0 0 18px;
+      font-size:32px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:0.18em;
+      text-align:center;
+      color:#8b1a10;
+      text-shadow:
+        0 2px 0 #f9e3b5,
+        0 4px 6px rgba(0,0,0,0.35);
+    }
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      flex:1;
+      overflow-y:auto;
+      padding-right:8px;
+
+      /* Ẩn scrollbar */
+      scrollbar-width: none;
+      -ms-overflow-style: none; 
+    }
+    .list::-webkit-scrollbar{
+    display:none;
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      background:var(--card);
+      border-radius:14px;
+      padding:12px 16px;
+      backdrop-filter:blur(3px);
+    }
+    .place{
+      width:28px;
+      height:28px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      color:var(--text-light);
+      margin-right:4px;
+      flex:0 0 auto;
+
+      font-size:14px;
+      line-height:1;
+      transform:translateY(-1px);
+    }
+    .meta{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .name{font-size:17px;font-weight:700;color:var(--text-light);}
+    .email{font-size:13px;color:var(--text-muted);}
+    .sub{font-size:12px;color:var(--text-muted);}
+    .time-pill{
+      margin-left:auto;
+      background:var(--pill);
+      border-radius:18px;
+      padding:6px 12px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-weight:700;
+      white-space:nowrap;
+      color:var(--text-light);
+    }
+    .empty{
+      color:var(--text-muted);
+      margin-top:20px;
+    }
+
+    /* --------- responsive--------- */
+    @media (max-width:900px){
+      main.page{
+        margin-top:20px;
+      }
+      .layout-grid{
+        grid-template-columns: 1fr;
+      }
+      .wrap{
+        order:1;
+      }
+    }
+    @media (max-width:540px){
+      .time-pill{font-size:12px}
+      .name{font-size:15px}
+      .email{font-size:11px}
+      .row{gap:8px}
+    }
+  </style>
+</head>
+<body>
+  <!-- header dùng chung -->
+  <div id="site-header"></div>
+
+  <main class="page">
+    <div class="layout-grid">
+      <!-- Cột trái: bỏ trống -->
+      <!-- Cột giữa: LEADERBOARD -->
+      <section class="wrap">
+        <h1>LEADERBOARD</h1>
+        <div id="list" class="list"></div>
+        <div id="empty" class="empty" style="display:none;">Chưa có người chơi nào.</div>
+      </section>
+      <!-- Cột phải: bỏ trống -->
+    </div>
+  </main>
+
+
+  <script>
+    // Load header
+    (async function(){
+      try{
+        const res = await fetch("/header.html");
+        const html = await res.text();
+        document.getElementById("site-header").innerHTML = html;
+      }catch(e){
+        console.error("Không load được header:", e);
+      }
+    })();
+    // test deploy 
+    const API_URL = "/api/leaderboard";
+    //const API_URL = "http://localhost:3000/api/leaderboard";
+    // Khi deploy Render:
+    // const API_URL = "https://citybuilder-leaderboard-api.onrender.com/api/leaderboard";
+
+    function formatElapsed(seconds){
+      seconds = Math.floor(seconds);
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return `${h}h ${m}m ${s}s`;
+      if (m > 0) return `${m}m ${s}s`;
+      return `${s}s`;
+    }
+
+    async function loadLeaderboard(){
+      try{
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        const list = document.getElementById("list");
+        const empty = document.getElementById("empty");
+
+        list.innerHTML = "";
+        if(!data || data.length === 0){
+          empty.style.display = "block";
+          return;
+        }
+        empty.style.display = "none";
+
+        data.forEach((row, idx)=>{
+          const div = document.createElement("div");
+          div.className = "row";
+
+          div.innerHTML = `
+            <div class="place">${idx+1}</div>
+            <div class="meta">
+              <div class="name">${row.username}</div>
+              <div class="email">${row.email || ""}</div>
+              <div class="sub">Submitted: ${row.submitted_at}</div>
+            </div>
+            <div class="time-pill">${formatElapsed(row.elapsed_seconds)}</div>
+          `;
+
+          const place = div.querySelector(".place");
+          if(idx===0) place.style.background = "var(--top1)";
+          if(idx===1) place.style.background = "var(--top2)";
+          if(idx===2) place.style.background = "var(--top3)";
+
+          list.appendChild(div);
+        });
+      }catch(err){
+        console.error(err);
+        const empty = document.getElementById("empty");
+        empty.style.display = "block";
+        empty.textContent = "Không tải được leaderboard.";
+      }
+    }
+
+    loadLeaderboard();
+  </script>
+</body>
+</html>
